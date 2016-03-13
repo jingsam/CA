@@ -5,6 +5,8 @@ patches-own [cx1 cx2 cx3 cx4 cx5 cx6 cx7 cx8 cx9 cx10 cx11 cx12 ctown cforbid cc
 
 
 to setup
+  clear-all
+
   import-x1
   import-x2
   import-x3
@@ -20,16 +22,46 @@ to setup
   import-town
   import-forbid
   import-city
+  display-city
 
-
+  reset-ticks
 end
 
 
 to go
+  ask patches with [ccity = 0 and cforbid = 1] [
+    set temp transit
+  ]
 
+  ask patches with [ccity = 0] [
+    set ccity temp
+    if ccity = 1 [set pcolor white]
+  ]
+
+  tick
+end
+
+to-report fx
+  report a + b1 * cx1 + b2 * cx2 + b3 * cx3 + b4 * cx4 + b5 * cx5 + b6 * cx6 + b7 * cx7 + b8 * cx8 + b9 * cx9 + b10 * cx10 + b11 * cx11 + b12 * cx12
+end
+
+to-report rand
+  report 1 + (- random-float 1) ^ rnd
+end
+
+to-report neighbor
+  report count neighbors with [ccity = 1] / count neighbors
+end
+
+to-report transit
+  let p fx * rand * neighbor
+  if random-float 1 <= p [report 1]
+
+  report 0
 end
 
 
+;import and display data
 to import-x1
   let data gis:load-dataset x1
   gis:set-world-envelope (gis:envelope-of data)
@@ -266,10 +298,9 @@ to display-city
   ask patches[
     set pcolor white
 
-    if ccity >= 0 [set pcolor scale-color black ccity 0 100]
+    if ccity >= 0 [set pcolor scale-color black ccity 0 1]
   ]
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 560
@@ -1343,7 +1374,7 @@ INPUTBOX
 420
 1295
 city
-data\\city.asc
+data\\city2006.asc
 1
 0
 String
@@ -1454,7 +1485,7 @@ BUTTON
 20
 1105
 125
-1161
+1165
 镇域边界
 NIL
 NIL
@@ -1471,7 +1502,7 @@ BUTTON
 20
 1235
 125
-1291
+1295
 城镇用地
 NIL
 NIL
@@ -1488,7 +1519,7 @@ BUTTON
 20
 1170
 125
-1226
+1230
 禁止开发区
 NIL
 NIL
@@ -1503,12 +1534,57 @@ NIL
 
 TEXTBOX
 20
-1070
+1075
 170
-1095
+1100
 其他数据
 18
 0.0
+1
+
+BUTTON
+20
+1300
+125
+1360
+面积约束
+NIL
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+130
+1300
+420
+1360
+constraint
+data\\constraint.csv
+1
+0
+String
+
+BUTTON
+425
+1300
+480
+1360
+打开
+set constraint user-file
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
 1
 
 @#$#@#$#@
