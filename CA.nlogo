@@ -1,8 +1,8 @@
-extensions [gis]
+extensions [gis csv table]
 
 patches-own [cx1 cx2 cx3 cx4 cx5 cx6 cx7 cx8 cx9 cx10 cx11 cx12 ctown cforbid ccity temp]
 
-
+globals [areas stops]
 
 to setup
   clear-all
@@ -22,15 +22,30 @@ to setup
   import-town
   import-forbid
   import-city
+  import-constraint
   display-city
+
 
   reset-ticks
 end
 
 
 to go
-  ask patches with [ccity = 0 and cforbid = 1] [
-    set temp transit
+  let should-stop reduce and (map [table:get stops ?] (table:keys stops))
+  if should-stop [stop]
+
+
+  foreach table:keys areas [
+    if table:get stops ? = false [
+      let area1 count patches with [ctown = ? and ccity = 1]
+      let area2 table:get areas ?
+      ifelse area1 < area2 [
+        ask patches with [ctown = ? and ccity = 0 and cforbid = 1] [
+          set temp transit
+        ]
+      ]
+      [table:put stops ? true]
+    ]
   ]
 
   ask patches with [ccity = 0] [
@@ -300,6 +315,13 @@ to display-city
 
     if ccity >= 0 [set pcolor scale-color black ccity 0 1]
   ]
+end
+
+to import-constraint
+  let csv csv:from-file constraint
+  set areas table:from-list but-first csv
+  set stops table:make
+  foreach table:keys areas [table:put stops ? false]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -1335,7 +1357,7 @@ BUTTON
 365
 68
 结果输出
-NIL
+gis:store-dataset gis:patch-dataset ccity user-new-file
 NIL
 1
 T
@@ -1565,7 +1587,7 @@ INPUTBOX
 420
 1360
 constraint
-data\\constraint.csv
+data\\constraint2013.csv
 1
 0
 String
