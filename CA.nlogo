@@ -2,7 +2,7 @@ extensions [gis csv table]
 
 patches-own [cx1 cx2 cx3 cx4 cx5 cx6 cx7 cx8 cx9 cx10 cx11 cx12 ctown cforbid ccity temp]
 
-globals [areas stops]
+globals [areas1 areas2]
 
 to setup
   clear-all
@@ -23,6 +23,9 @@ to setup
   import-forbid
   import-city
   import-constraint
+
+  ask patches [set temp 0]
+
   display-city
 
 
@@ -31,32 +34,33 @@ end
 
 
 to go
-  let should-stop reduce and (map [table:get stops ?] (table:keys stops))
+  let should-stop reduce and (map [(table:get areas1 ?) >= (table:get areas2 ?)] (table:keys areas2))
   if should-stop [stop]
 
-
-  foreach table:keys areas [
-    if table:get stops ? = false [
-      let area1 count patches with [ctown = ? and ccity = 1]
-      let area2 table:get areas ?
-      ifelse area1 < area2 [
-        ask patches with [ctown = ? and ccity = 0 and cforbid = 1] [
-          set temp transit
-        ]
-      ]
-      [table:put stops ? true]
+  ask patches with [ccity = 0 and cforbid = 1] [
+    if (table:get areas1 ctown) < (table:get areas2 ctown) [
+      set temp transit
+      if temp = 1 [table:put areas1 ctown (table:get areas1 ctown + 1)]
     ]
   ]
 
-  ask patches with [ccity = 0] [
+  ask patches with [ccity = 0 and temp = 1] [
     set ccity temp
-    if ccity = 1 [set pcolor white]
+    set pcolor white
+    set temp 0
   ]
+
+  let dareas table:make
+  foreach table:keys areas2 [
+    table:put dareas ? (table:get areas2 ? - table:get areas1 ?)
+  ]
+
+  show table:to-list dareas
 
   tick
 end
 
-to-report fx
+to-report logistic
   report a + b1 * cx1 + b2 * cx2 + b3 * cx3 + b4 * cx4 + b5 * cx5 + b6 * cx6 + b7 * cx7 + b8 * cx8 + b9 * cx9 + b10 * cx10 + b11 * cx11 + b12 * cx12
 end
 
@@ -69,7 +73,11 @@ to-report neighbor
 end
 
 to-report transit
-  let p fx * rand * neighbor
+  let p 1
+  if logistic-effect [set p p * logistic]
+  if neighbor-effect [set p p * neighbor]
+  if random-effect [set p p * rand]
+
   if random-float 1 <= p [report 1]
 
   report 0
@@ -319,9 +327,12 @@ end
 
 to import-constraint
   let csv csv:from-file constraint
-  set areas table:from-list but-first csv
-  set stops table:make
-  foreach table:keys areas [table:put stops ? false]
+  set areas2 table:from-list but-first csv
+
+  set areas1 table:make
+  foreach table:keys areas2 [
+    table:put areas1 ? (count patches with [ctown = ? and ccity = 1])
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -1396,7 +1407,7 @@ INPUTBOX
 420
 1295
 city
-data\\city2006.asc
+data\\city2013.asc
 1
 0
 String
@@ -1587,7 +1598,7 @@ INPUTBOX
 420
 1360
 constraint
-data\\constraint2013.csv
+data\\constraint2020.csv
 1
 0
 String
@@ -1607,6 +1618,69 @@ NIL
 NIL
 NIL
 NIL
+1
+
+SWITCH
+340
+100
+540
+133
+logistic-effect
+logistic-effect
+0
+1
+-1000
+
+SWITCH
+340
+140
+540
+173
+neighbor-effect
+neighbor-effect
+0
+1
+-1000
+
+SWITCH
+340
+180
+540
+213
+random-effect
+random-effect
+0
+1
+-1000
+
+TEXTBOX
+245
+110
+335
+128
+启用逻辑回归
+14
+0.0
+1
+
+TEXTBOX
+245
+150
+335
+168
+启用邻域作用
+14
+0.0
+1
+
+TEXTBOX
+245
+190
+335
+208
+启用随机影响
+14
+0.0
 1
 
 @#$#@#$#@
