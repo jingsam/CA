@@ -37,7 +37,7 @@ to go
   let should-stop reduce and (map [(table:get areas1 ?) >= (table:get areas2 ?)] (table:keys areas2))
   if should-stop [stop]
 
-  ask patches with [ccity = 0 and cforbid = 1] [
+  ask patches with [ccity = 0 and cforbid = 1 and ctown > 0] [
     if (table:get areas1 ctown) < (table:get areas2 ctown) [
       set temp transit
       if temp = 1 [table:put areas1 ctown (table:get areas1 ctown + 1)]
@@ -2026,7 +2026,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.3
+NetLogo 5.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
